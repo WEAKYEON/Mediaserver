@@ -1,0 +1,6 @@
+# Apache 2.4: block direct HTTP requests for Jam MP4 files.
+# Keep the existing public fallback animation available.
+# PHP in /stream/ can still read these files through the filesystem.
+<FilesMatch "^(?!FuzikAppAnimation\.mp4$).*\.(?i:mp4)$">
+    Require all denied
+</FilesMatch>
