@@ -1,7 +1,5 @@
 # Fuzik Media Server work
 
-Internship implementation by Tanat Kunharee. This repository contains the media cleanup and protected Jam download changes prepared for review. It does not include the existing company media-server snapshot or video files.
-
 ## Files
 
 - `cleanup_media.py`: manifest-driven move of approved void media to private Trash, with dry run by default; purge Trash after three days.
