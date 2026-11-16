@@ -1,6 +1,6 @@
 <?php
-// Called only by the webapp server after it has checked the paid Jam entitlement.
-// MEDIA_DOWNLOAD_KEY must be set in the PHP server environment, never in browser code.
+// The webapp checks the paid entitlement, then signs a short-lived media ticket.
+// This endpoint holds only the corresponding public key, never an API/secret key.
 
 $method = $_SERVER['REQUEST_METHOD'] ?? '';
 if ($method !== 'POST' && $method !== 'HEAD') {
@@ -8,21 +8,45 @@ if ($method !== 'POST' && $method !== 'HEAD') {
     exit;
 }
 
-$expectedKey = getenv('MEDIA_DOWNLOAD_KEY') ?: '';
-$providedKey = $_SERVER['HTTP_X_MEDIA_DOWNLOAD_KEY'] ?? '';
-if (strlen($expectedKey) < 32) {
+$publicKeyPath = getenv('MEDIA_DOWNLOAD_PUBLIC_KEY_FILE') ?: '';
+if (!function_exists('openssl_pkey_get_public') || !$publicKeyPath || !is_readable($publicKeyPath)) {
     http_response_code(503);
     exit;
 }
-if (!hash_equals($expectedKey, $providedKey)) {
-    http_response_code(403);
+$publicKeyText = file_get_contents($publicKeyPath);
+$publicKey = $publicKeyText === false ? false : openssl_pkey_get_public($publicKeyText);
+$details = $publicKey ? openssl_pkey_get_details($publicKey) : false;
+if (!$details || $details['type'] !== OPENSSL_KEYTYPE_RSA || $details['bits'] < 2048) {
+    http_response_code(503);
     exit;
 }
 
 $body = $method === 'POST' ? json_decode(file_get_contents('php://input'), true) : null;
 $code = $method === 'HEAD' ? ($_GET['code'] ?? '') : (is_array($body) ? ($body['code'] ?? '') : '');
+$ticket = $method === 'HEAD' ? ($_GET['ticket'] ?? '') : (is_array($body) ? ($body['ticket'] ?? '') : '');
 if (!is_string($code) || strlen($code) < 6 || strlen($code) > 512) {
     http_response_code(400);
+    exit;
+}
+if (!is_string($ticket) || strlen($ticket) > 4096 ||
+    !preg_match('/^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/D', $ticket, $parts)) {
+    http_response_code(403);
+    exit;
+}
+$decodeUrl64 = static function (string $value): string|false {
+    return base64_decode(strtr($value, '-_', '+/') . str_repeat('=', (4 - strlen($value) % 4) % 4), true);
+};
+$payload = $decodeUrl64($parts[1]);
+$signature = $decodeUrl64($parts[2]);
+$claims = $payload === false ? null : json_decode($payload, true);
+$now = time();
+if ($signature === false || !is_array($claims) ||
+    ($claims['v'] ?? null) !== 1 || ($claims['code'] ?? null) !== $code ||
+    ($claims['method'] ?? null) !== $method ||
+    !isset($claims['exp']) || !is_int($claims['exp']) ||
+    $claims['exp'] <= $now || $claims['exp'] > $now + 90 ||
+    openssl_verify($parts[1], $signature, $publicKey, OPENSSL_ALGO_SHA256) !== 1) {
+    http_response_code(403);
     exit;
 }
 

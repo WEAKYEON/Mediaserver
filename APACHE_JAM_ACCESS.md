@@ -1,5 +1,10 @@
 # Jam original-file access (draft)
 
+`stream/secure_jam_download.php` verifies a short-lived RSA signature with a
+public key before serving a copy. It no longer uses `MEDIA_DOWNLOAD_KEY` or an
+IP allowlist. See `MEDIA_SIGNED_DOWNLOAD.md` for setup and remaining playback
+limitations.
+
 Target on media server: `/var/www/media/public_html/uploads/jam/.htaccess`.
 This is a proposed Apache 2.4 rule, not a deployed change. It requires Apache
 to honor `.htaccess` and `AllowOverride AuthConfig` (or `All`) for this path.
