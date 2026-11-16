@@ -29,7 +29,3 @@ close that legacy streaming route. Consequently, the original is not fully
 protected until playback uses an already available restricted/preview source
 or the playback design is changed separately. Do not represent the paid
 download endpoint alone as a complete original-file paywall.
-
-Local check: `python -B secure_jam_download_smoke.py`. It uses temporary files
-and a disposable RSA key, and exercises unsigned, tampered, expired,
-wrong-method, and wrong-video requests as well as successful copy delivery.

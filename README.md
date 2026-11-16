@@ -8,7 +8,6 @@ Internship implementation by Tanat Kunharee. This repository contains the media 
 - `export_cleanup_manifest.py`: export active and void references from the Django database.
 - `cleanup_download_copies.py`: remove abandoned temporary download copies.
 - `stream/secure_jam_download.php`: verify a short-lived RSA-signed request, copy a Jam video to a private temporary file, stream the copy, then remove it.
-- `secure_jam_download_smoke.py`: disposable authorization and copy test for the PHP endpoint.
 - `apache/uploads_jam/.htaccess`: draft Apache rule blocking direct Jam MP4 URLs.
 - `MEDIA_CLEANUP_RUNBOOK.md`, `MEDIA_SIGNED_DOWNLOAD.md`, and `APACHE_JAM_ACCESS.md`: review and deployment notes.
 
